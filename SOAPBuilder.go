@@ -7,6 +7,15 @@ import (
 
 type SoapMessage string
 
+func NewEmptySOAP() SoapMessage {
+	doc := buildSoapRoot()
+	doc.IndentTabs()
+
+	res, _ := doc.WriteToString();
+
+	return  SoapMessage(res)
+}
+
 func NewSOAP(headContent []*etree.Element, bodyContent []*etree.Element, namespaces map[string]string) SoapMessage {
 	doc := buildSoapRoot()
 	doc.IndentTabs()
@@ -60,7 +69,7 @@ func (msg *SoapMessage) AddHeaderContent(element *etree.Element) {
 	if err := doc.ReadFromString(msg.String()); err != nil {
 		log.Println(err.Error())
 	}
-	//doc.FindElement("./Envelope/Body").AddChild(element)
+
 	bodyTag := doc.Root().SelectElement("Header")
 	bodyTag.AddChild(element)
 
