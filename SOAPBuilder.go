@@ -3,6 +3,7 @@ package gosoap
 import (
 	"github.com/beevik/etree"
 	"log"
+	"encoding/xml"
 )
 
 type SoapMessage string
@@ -87,18 +88,20 @@ func (msg *SoapMessage) AddBodyContents(elements []*etree.Element) {
 	*msg = SoapMessage(res)
 }
 
-func (msg *SoapMessage) AddStringHeaderContent(data string) {
+func (msg *SoapMessage) AddStringHeaderContent(data string) error {
 	doc := etree.NewDocument()
 
 	if err := doc.ReadFromString(data); err != nil {
-		log.Println(err.Error())
+		//log.Println(err.Error())
+		return err
 	}
 
 	element := doc.Root()
 
 	doc = etree.NewDocument()
 	if err := doc.ReadFromString(msg.String()); err != nil {
-		log.Println(err.Error())
+		//log.Println(err.Error())
+		return err
 	}
 
 	bodyTag := doc.Root().SelectElement("Header")
@@ -108,6 +111,8 @@ func (msg *SoapMessage) AddStringHeaderContent(data string) {
 	res, _ := doc.WriteToString()
 
 	*msg = SoapMessage(res)
+
+	return nil
 }
 
 func (msg *SoapMessage) AddHeaderContent(element *etree.Element) {
@@ -159,20 +164,23 @@ func (msg *SoapMessage) AddRootNamespace(key, value string) {
 	*msg = SoapMessage(res)
 }
 
-func (msg *SoapMessage) AddRootNamespaces(namespaces map[string]string) {
+func (msg *SoapMessage) AddRootNamespaces(namespaces map[string]string) error {
 	doc := etree.NewDocument()
 	if err := doc.ReadFromString(msg.String()); err != nil {
-		log.Println(err.Error())
+		//log.Println(err.Error())
+		return err
 	}
 
 	for key, value := range namespaces {
-		doc.CreateAttr("xmlns:" + key, value)
+		doc.Root().CreateAttr("xmlns:" + key, value)
 	}
 
 	doc.IndentTabs()
 	res, _ := doc.WriteToString()
 
 	*msg = SoapMessage(res)
+
+	return nil
 }
 
 
@@ -188,4 +196,38 @@ func buildSoapRoot() *etree.Document {
 	env.CreateAttr("xmlns", "http://www.w3.org/2003/05/soap-envelope")
 
 	return doc
+}
+
+func (msg *SoapMessage) AddWSSecurity(username, password string) {
+	doc := etree.NewDocument()
+	if err := doc.ReadFromString(msg.String()); err != nil {
+		log.Println(err.Error())
+	}
+
+	/*
+	Getting an WS-Security struct representation
+	 */
+	auth := newSecurity(username, password)
+
+	/*
+	Adding WS-Security namespaces to root element of SOAP message
+	 */
+	msg.AddRootNamespace("wsse", "http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext1.0.xsd")
+	msg.AddRootNamespace("wsu", "http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility1.0.xsd")
+
+	soapReq, err := xml.MarshalIndent(auth, "", "  ")
+	if err != nil {
+		//log.Printf("error: %v\n", err.Error())
+		panic(err)
+	}
+
+	/*
+	Adding WS-Security struct to SOAP header
+	 */
+	msg.AddStringHeaderContent(string(soapReq))
+
+	doc.IndentTabs()
+	res, _ := doc.WriteToString()
+
+	*msg = SoapMessage(res)
 }
