@@ -202,10 +202,10 @@ func buildSoapRoot() *etree.Document {
 }
 
 func (msg *SoapMessage) AddWSSecurity(username, password string) {
-	doc := etree.NewDocument()
-	if err := doc.ReadFromString(msg.String()); err != nil {
-		log.Println(err.Error())
-	}
+	//doc := etree.NewDocument()
+	//if err := doc.ReadFromString(msg.String()); err != nil {
+	//	log.Println(err.Error())
+	//}
 
 	/*
 	Getting an WS-Security struct representation
@@ -229,8 +229,8 @@ func (msg *SoapMessage) AddWSSecurity(username, password string) {
 	 */
 	msg.AddStringHeaderContent(string(soapReq))
 
-	doc.IndentTabs()
-	res, _ := doc.WriteToString()
-
-	*msg = SoapMessage(res)
+	//doc.IndentTabs()
+	//res, _ := doc.WriteToString()
+	//
+	//*msg = SoapMessage(res)
 }
