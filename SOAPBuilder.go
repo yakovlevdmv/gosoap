@@ -160,6 +160,11 @@ func (msg *SoapMessage) AddRootNamespace(key, value string) {
 }
 
 func (msg *SoapMessage) AddRootNamespaces(namespaces map[string]string) {
+	for key, value := range namespaces {
+		msg.AddRootNamespace(key, value)
+	}
+
+	/*
 	doc := etree.NewDocument()
 	if err := doc.ReadFromString(msg.String()); err != nil {
 		log.Println(err.Error())
@@ -172,7 +177,7 @@ func (msg *SoapMessage) AddRootNamespaces(namespaces map[string]string) {
 	doc.IndentTabs()
 	res, _ := doc.WriteToString()
 
-	*msg = SoapMessage(res)
+	*msg = SoapMessage(res)*/
 }
 
 
