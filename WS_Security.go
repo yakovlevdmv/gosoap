@@ -11,43 +11,65 @@ import (
 /*************************
 	WS-Security types
 *************************/
-const (passwordType = "https://www.oasis-open.org/committees/download.php/13392/wss-v1.1-spec-pr-UsernameTokenProfile-01.htm#PasswordDigest")
-
+const (
+	passwordType = "http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-username-token-profile-1.0#PasswordDigest"
+	encodingType = "http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-soap-message-security-1.0#Base64Binary"
+)
+//XMLName xml.Name `xml:"http://purl.org/rss/1.0/modules/content/ encoded"`
 type security struct {
-	XMLName xml.Name  `xml:"wsse:Security"`
+	//XMLName xml.Name  `xml:"wsse:Security"`
+	XMLName xml.Name `xml:"http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd Security"`
 	Auth wsAuth
 }
 
 type password struct {
-	XMLName xml.Name `xml:"wsse:Password"`
+	//XMLName xml.Name `xml:"wsse:Password"`
 	Type string `xml:"Type,attr"`
 	Password string `xml:",chardata"`
 }
 
-type wsAuth struct {
-	XMLName xml.Name  `xml:"wsse:UsernameToken"`
-	Username string   `xml:"wsse:Username"`
-	Password password `xml:"wsse:Password"`
-	Nonce string      `xml:"wsse:Nonce"`
-	Created string    `xml:"wsse:Created"`
+type nonce struct {
+	//XMLName xml.Name `xml:"wsse:Nonce"`
+	Type string `xml:"EncodingType,attr"`
+	Nonce string `xml:",chardata"`
 }
 
-func newSecurity(username, passwd string) security {
+type wsAuth struct {
+	XMLName xml.Name  `xml:"UsernameToken"`
+	Username string   `xml:"Username"`
+	Password password `xml:"Password"`
+	Nonce nonce      `xml:"Nonce"`
+	Created string    `xml:"http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd Created"`
+}
+/*
+        <Security s:mustUnderstand="1" xmlns="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd">
+            <UsernameToken>
+                <Username>admin</Username>
+                <Password Type="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-username-token-profile-1.0#PasswordDigest">edBuG+qVavQKLoWuGWQdPab4IBE=</Password>
+                <Nonce EncodingType="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-soap-message-security-1.0#Base64Binary">S7wO1ZFTh0KXv2CR7bd2ZXkLAAAAAA==</Nonce>
+                <Created xmlns="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd">2018-04-10T18:04:25.836Z</Created>
+            </UsernameToken>
+        </Security>
+ */
+
+func NewSecurity(username, passwd string) security {
 	/** Generating Nonce sequence **/
-	charsToGenerate := 16
+	charsToGenerate := 32
 	charSet := gostrgen.Lower | gostrgen.Digit
 
-	nonce, _ := gostrgen.RandGen(charsToGenerate, charSet, "", "")
-
+	nonceSeq, _ := gostrgen.RandGen(charsToGenerate, charSet, "", "")
 	auth := security{
 		Auth:wsAuth{
 			Username:username,
 			Password:password {
 				Type:passwordType,
-				Password:generateToken(username, nonce, time.Now(), passwd),
+				Password:generateToken(username, nonceSeq, time.Now().UTC(), passwd),
 			},
-			Nonce: nonce,
-			Created: time.Now().Format(time.RFC3339),
+			Nonce:nonce {
+				Type:encodingType,
+				Nonce: nonceSeq,
+			},
+			Created: time.Now().UTC().Format(time.RFC3339Nano),
 		},
 	}
 
@@ -62,7 +84,7 @@ func generateToken(Username string, Nonce string, Created time.Time, Password st
 
 	hasher := sha1.New()
 	//hasher.Write([]byte((base64.StdEncoding.EncodeToString([]byte(Nonce)) + Created.Format(time.RFC3339) + Password)))
-	hasher.Write([]byte(string(sDec) + Created.Format(time.RFC3339) + Password))
+	hasher.Write([]byte(string(sDec) + Created.Format(time.RFC3339Nano) + Password))
 
 	return base64.StdEncoding.EncodeToString(hasher.Sum(nil))
 }
