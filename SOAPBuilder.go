@@ -4,6 +4,9 @@ import (
 	"github.com/beevik/etree"
 	"log"
 	"encoding/xml"
+	"net/http"
+	"io/ioutil"
+	"strings"
 )
 
 type SoapMessage string
@@ -40,7 +43,38 @@ func (msg SoapMessage) StringIndent() string {
 	doc.IndentTabs()
 	res, _ := doc.WriteToString()
 
+
 	return res
+}
+
+func SoapMessageFromResponse(resp *http.Response) SoapMessage {
+	str, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		panic(err)
+	}
+	return SoapMessage(str)
+}
+
+func (msg SoapMessage) Body() []string {
+	var result []string
+	var res string
+	doc := etree.NewDocument()
+
+	if err := doc.ReadFromString(msg.String()); err != nil {
+		log.Println(err.Error())
+	}
+
+	bodyTag := doc.Root().SelectElement("Body")
+	bodyContent := bodyTag.FindElements("./*")
+	for _,j := range bodyContent {
+		doc.SetRoot(j)
+		doc.IndentTabs()
+		res, _ = doc.WriteToString()
+		res = strings.Replace(res, `<?xml version="1.0" encoding="UTF-8"?>`, "", -1)
+		result = append(result, res)
+	}
+
+	return result
 }
 
 func (msg *SoapMessage) AddStringBodyContent(data string)  {
