@@ -40,16 +40,17 @@ func (msg SoapMessage) StringIndent() string {
 	doc.IndentTabs()
 	res, _ := doc.WriteToString()
 
+
 	return res
 }
 
 func (msg SoapMessage) Body() string {
+
 	doc := etree.NewDocument()
 
 	if err := doc.ReadFromString(msg.String()); err != nil {
 		log.Println(err.Error())
 	}
-
 	bodyTag := doc.Root().SelectElement("Body").ChildElements()[0]
 	doc.SetRoot(bodyTag)
 	doc.IndentTabs()
