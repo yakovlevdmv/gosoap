@@ -10,7 +10,7 @@ type SoapMessage string
 
 func NewEmptySOAP() SoapMessage {
 	doc := buildSoapRoot()
-	doc.IndentTabs()
+	//doc.IndentTabs()
 
 	res, _ := doc.WriteToString();
 
@@ -19,7 +19,7 @@ func NewEmptySOAP() SoapMessage {
 
 func NewSOAP(headContent []*etree.Element, bodyContent []*etree.Element, namespaces map[string]string) SoapMessage {
 	doc := buildSoapRoot()
-	doc.IndentTabs()
+	//doc.IndentTabs()
 
 	res, _ := doc.WriteToString();
 
@@ -43,6 +43,22 @@ func (msg SoapMessage) StringIndent() string {
 	return res
 }
 
+func (msg SoapMessage) Body() string {
+	doc := etree.NewDocument()
+
+	if err := doc.ReadFromString(msg.String()); err != nil {
+		log.Println(err.Error())
+	}
+
+	bodyTag := doc.Root().SelectElement("Body").ChildElements()[0]
+	doc.SetRoot(bodyTag)
+	doc.IndentTabs()
+
+	res, _ := doc.WriteToString()
+
+	return res
+}
+
 func (msg *SoapMessage) AddStringBodyContent(data string)  {
 	doc := etree.NewDocument()
 
@@ -60,7 +76,7 @@ func (msg *SoapMessage) AddStringBodyContent(data string)  {
 	bodyTag := doc.Root().SelectElement("Body")
 	bodyTag.AddChild(element)
 
-	doc.IndentTabs()
+	//doc.IndentTabs()
 	res, _ := doc.WriteToString()
 
 	*msg = SoapMessage(res)
@@ -75,7 +91,7 @@ func (msg *SoapMessage) AddBodyContent(element *etree.Element)  {
 	bodyTag := doc.Root().SelectElement("Body")
 	bodyTag.AddChild(element)
 
-	doc.IndentTabs()
+	//doc.IndentTabs()
 	res, _ := doc.WriteToString()
 
 	*msg = SoapMessage(res)
@@ -95,7 +111,7 @@ func (msg *SoapMessage) AddBodyContents(elements []*etree.Element) {
 		}
 	}
 
-	doc.IndentTabs()
+	//doc.IndentTabs()
 	res, _ := doc.WriteToString()
 
 	*msg = SoapMessage(res)
@@ -120,7 +136,7 @@ func (msg *SoapMessage) AddStringHeaderContent(data string) error {
 	bodyTag := doc.Root().SelectElement("Header")
 	bodyTag.AddChild(element)
 
-	doc.IndentTabs()
+	//doc.IndentTabs()
 	res, _ := doc.WriteToString()
 
 	*msg = SoapMessage(res)
@@ -137,7 +153,7 @@ func (msg *SoapMessage) AddHeaderContent(element *etree.Element) {
 	bodyTag := doc.Root().SelectElement("Header")
 	bodyTag.AddChild(element)
 
-	doc.IndentTabs()
+	//doc.IndentTabs()
 	res, _ := doc.WriteToString()
 
 	*msg = SoapMessage(res)
@@ -157,7 +173,7 @@ func (msg *SoapMessage) AddHeaderContents(elements []*etree.Element) {
 		}
 	}
 
-	doc.IndentTabs()
+	//doc.IndentTabs()
 	res, _ := doc.WriteToString()
 
 	*msg = SoapMessage(res)
@@ -171,7 +187,7 @@ func (msg *SoapMessage) AddRootNamespace(key, value string) {
 
 	doc.Root().CreateAttr("xmlns:" + key, value)
 
-	doc.IndentTabs()
+	//doc.IndentTabs()
 	res, _ := doc.WriteToString()
 
 	*msg = SoapMessage(res)
