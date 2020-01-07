@@ -58,21 +58,21 @@ func NewSecurity(username, passwd string) security {
 	charSet := gostrgen.Lower | gostrgen.Digit
 
 	nonceSeq, _ := gostrgen.RandGen(charsToGenerate, charSet, "", "")
+	created := time.Now().UTC()
 	auth := security{
-		Auth:wsAuth{
-			Username:username,
-			Password:password {
-				Type:passwordType,
-				Password:generateToken(username, nonceSeq, time.Now().UTC(), passwd),
+		Auth: wsAuth{
+			Username: username,
+			Password: password{
+				Type:     passwordType,
+				Password: generateToken(username, nonceSeq, created, passwd),
 			},
-			Nonce:nonce {
-				Type:encodingType,
+			Nonce: nonce{
+				Type:  encodingType,
 				Nonce: nonceSeq,
 			},
-			Created: time.Now().UTC().Format(time.RFC3339Nano),
+			Created: created.Format(time.RFC3339Nano),
 		},
 	}
-
 	return auth
 }
 
